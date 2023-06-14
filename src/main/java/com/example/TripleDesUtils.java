@@ -3,11 +3,14 @@ package com.example;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.apache.commons.crypto.random.CryptoRandom;
+import org.apache.commons.crypto.random.CryptoRandomFactory;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 
 @Component
 public class TripleDesUtils {
@@ -20,6 +23,18 @@ public class TripleDesUtils {
 
     @Value("${encryption.algorithm}")
     private String encryptionAlgorithm;
+
+    // Generate Random key
+    public String generateKeys() throws GeneralSecurityException {
+        CryptoRandom random = CryptoRandomFactory.getCryptoRandom();
+        byte[] keyBytes = new byte[24];
+        random.nextBytes(keyBytes);
+        String encryptionKey = Base64.encodeBase64String(keyBytes);
+        System.out.println("Encryption Key: " + encryptionKey);
+        return encryptionKey;
+    }
+
+
 
     public String encrypt(String plainText) throws Exception {
         byte[] keyBytes1 = Base64.decodeBase64(encryptionKey1);
