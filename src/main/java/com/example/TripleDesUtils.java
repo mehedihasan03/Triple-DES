@@ -3,14 +3,10 @@ package com.example;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.apache.commons.crypto.random.CryptoRandom;
-import org.apache.commons.crypto.random.CryptoRandomFactory;
 
 import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 
 @Component
 public class TripleDesUtils {
@@ -24,41 +20,27 @@ public class TripleDesUtils {
     @Value("${encryption.algorithm}")
     private String encryptionAlgorithm;
 
-    // Generate Random key
-    public String generateKeys() throws GeneralSecurityException {
-        CryptoRandom random = CryptoRandomFactory.getCryptoRandom();
-        byte[] keyBytes = new byte[24];
-        random.nextBytes(keyBytes);
-        String encryptionKey = Base64.encodeBase64String(keyBytes);
-        System.out.println("Encryption Key: " + encryptionKey);
-        return encryptionKey;
-    }
-
-
-
     public String encrypt(String plainText) throws Exception {
-        byte[] keyBytes1 = Base64.decodeBase64(encryptionKey1);
-        byte[] keyBytes2 = Base64.decodeBase64(encryptionKey2);
-        SecretKey secretKey1 = new SecretKeySpec(keyBytes1, encryptionAlgorithm);
-        SecretKey secretKey2 = new SecretKeySpec(keyBytes2, encryptionAlgorithm);
-        Cipher cipher = Cipher.getInstance(encryptionAlgorithm);
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey1);
-        byte[] intermediate = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey2);
-        byte[] encryptedBytes = cipher.doFinal(intermediate);
-        return Base64.encodeBase64String(encryptedBytes);
+        byte[] keyBytes1 = encryptionKey1.getBytes();
+        byte[] keyBytes2 = encryptionKey2.getBytes();
+        byte[] plaintext = plainText.getBytes();
+        Cipher encipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+        SecretKeySpec myKey = new SecretKeySpec(keyBytes1, encryptionAlgorithm);
+        IvParameterSpec ivspec = new IvParameterSpec(keyBytes2);
+        encipher.init(Cipher.ENCRYPT_MODE, myKey, ivspec);
+        byte[] cipherText = encipher.doFinal(plaintext);
+        return Base64.encodeBase64String(cipherText);
     }
 
     public String decrypt(String encryptedText) throws Exception {
-        byte[] keyBytes1 = Base64.decodeBase64(encryptionKey1);
-        byte[] keyBytes2 = Base64.decodeBase64(encryptionKey2);
-        SecretKey secretKey1 = new SecretKeySpec(keyBytes1, encryptionAlgorithm);
-        SecretKey secretKey2 = new SecretKeySpec(keyBytes2, encryptionAlgorithm);
-        Cipher cipher = Cipher.getInstance(encryptionAlgorithm);
-        cipher.init(Cipher.DECRYPT_MODE, secretKey2);
-        byte[] intermediate = cipher.doFinal(Base64.decodeBase64(encryptedText));
-        cipher.init(Cipher.DECRYPT_MODE, secretKey1);
-        byte[] decryptedBytes = cipher.doFinal(intermediate);
-        return new String(decryptedBytes, StandardCharsets.UTF_8);
+        byte[] keyBytes1 = encryptionKey1.getBytes();
+        byte[] keyBytes2 = encryptionKey2.getBytes();
+        byte[] encData = Base64.decodeBase64(encryptedText);
+        Cipher decipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+        SecretKeySpec myKey = new SecretKeySpec(keyBytes1, encryptionAlgorithm);
+        IvParameterSpec ivspec = new IvParameterSpec(keyBytes2);
+        decipher.init(Cipher.DECRYPT_MODE, myKey, ivspec);
+        byte[] plainText = decipher.doFinal(encData);
+        return new String(plainText);
     }
 }
