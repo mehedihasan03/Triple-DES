@@ -1,24 +1,32 @@
 package com.example;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Mono;
 
 @RestController
+@RequestMapping("/3des")
 public class EncryptionController {
 
-    @Autowired
-    private TripleDesUtils tripleDesUtils;
 
-    @GetMapping("/api/encrypt/{data}")
-    public Mono<String> encryptData(@PathVariable("data") String data) {
-        return Mono.fromCallable(() -> tripleDesUtils.encrypt(data));
+    private final TripleDesUtils tripleDesUtils;
+
+    public EncryptionController(TripleDesUtils tripleDesUtils) {
+        this.tripleDesUtils = tripleDesUtils;
     }
 
-    @GetMapping("/api/decrypt/{data}")
-    public Mono<String> decryptData(@PathVariable("data") String data) {
-        return Mono.fromCallable(() -> tripleDesUtils.decrypt(data));
+    @GetMapping("/encrypt")
+    public String encryptData(@RequestParam("data") String data,
+                                            @RequestParam("key1") String key1,
+                                            @RequestParam("key2") String key2) throws Exception {
+        return tripleDesUtils.encrypt(data, key1, key2);
+    }
+
+    @GetMapping("/decrypt")
+    public String decryptData(@RequestParam("data") String data,
+                              @RequestParam("key1") String key1,
+                              @RequestParam("key2") String key2) throws Exception {
+        return tripleDesUtils.decrypt(data, key1, key2);
     }
 }
